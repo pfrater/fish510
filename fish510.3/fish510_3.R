@@ -1,4 +1,5 @@
 ## R code from fish510.3 - modeling length at age and length distributions
+setwd('C:/Users/pfrater/Documents/classes/fish510/rCode')
 
 english=F
 source('fishData.R')
@@ -66,7 +67,23 @@ lhat <- vonb(vb.par)
 lines(a, lhat)
 
 
-## fish 510.3.3 - models of length distribution
+## fish 510.3.3.8 - models of length distribution
+source('functions.r')
+source('init.r') 
+fm <- nlm(sseprop, p0)
+p1 <- fm$estimate
+p1 <- abs(p1)
+pi <- c(p1, 1-sum(p1))
+fit <- rep(0,130) 
+for (lgrp in 1:130) {
+    fit[lgrp] <- sum(pi*(pnorm((lgrp+0.5-mu)/sigma)-pnorm((lgrp-0.5-mu)/sigma)))
+}
+plot(lgrps,dat, type='b', lwd=2, xlab='Length (cm)', ylab='Frequency')
+lines(lgrps,fit)
+
+
+
+
 
 
 
