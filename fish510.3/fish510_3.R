@@ -83,6 +83,87 @@ lines(lgrps,fit)
 
 
 
+### fish510.3.5 - modelling length-weight relationships
+m <- read.table('http://www.hafro.is/~gunnar/unu/codsample.dat', header=T)
+l <- m$le
+w <- m$osl
+plot(w~l)
+x <- log(l)
+y <- log(w)
+fit <- lm(y~x)
+summary(fit)
+plot(y~x)
+abline(fit)
+e <- resid(fit)
+hist(e)
+plot(l,e)
+
+
+
+### fish510.3.6 - modeling the development of a length distribution
+## an updating length distribution
+# this is used to predict how fish 'should' move into the length distribution of the next age class
+par(mfrow=c(2,3))
+lsample <- floor((rnorm(1000)*5+25)/1)*1
+l <- tapply(lsample, lsample, length)
+lens <- as.numeric(names(l))
+k <- 0.2
+linf <- 120
+vonb <- function(k, linf, ages) {
+    return(linf*(1-exp(-k*ages)))
+}
+inversevonb <- function(k, linf, lengths) {
+    return(-log(1-lengths/linf)/k)
+}
+n <- 40
+finalLscale <- min(lens):(max(lens+n))
+tempL <- rep(0.001, length(finalLscale))
+names(tempL) <- as.character(finalLscale)
+tempL[names(l)] <- l
+barplot(tempL, space=0, main='Example pop freq at length \n single cohort',xlab='Length',ylab='Frequency')
+ages <- 0:15
+lengrp22 <- 22
+freq22 <- l[as.character(lengrp22)]
+deltal22 <- vonb(k, linf, inversevonb(k, linf, 22)+1)-22
+plot(ages, vonb(k, linf, ages), type='l', main='von B length at age', ylab='Length (cm)', xlab='Age')
+
+xvalues <- c(0, inversevonb(k, linf, 22), inversevonb(k, linf,22)+1, inversevonb(k,linf, 22)+1)
+yvalues <- c(22,22,22,vonb(k, linf, inversevonb(k, linf,22)+1))
+lines(xvalues, yvalues, type='l')
+text(max(xvalues)+1, 22+deltal22/2, paste('Deltal=', round(deltal22), 'cm at l=22cm'), pos=4)
+
+# set up binomial update method - just for length group 22
+p <- deltal22/n
+updatefreq <- dbinom(0:n, n, p)
+names(updatefreq) <- as.character(0:n)
+barplot(updatefreq, space=0, main='Updating length group 22 \n Binomial: n=40&n*p=Deltal',
+        xlab='Length increment', ylab='Probability')
+
+# now update the entire length distribution
+deltal <- vonb(k, linf, inversevonb(k, linf, lens)+1) - lens
+plot(lens, deltal, type='l', main='Mean growth by length group', xlab='Initial length (cm)')
+
+pvec <- deltal/n
+popfreq <- rep(0, length(finalLscale))
+names(popfreq) <- as.character(finalLscale)
+
+for (i in 1:length(lens)) {
+    p <- pvec[i]
+    initL <- lens[i]
+    initfreq <- l[i]
+    updatemat <- dbinom(0:n, n, p)
+    finalL <- initL+(0:n)
+    finalfreq <- initfreq*updatemat
+    names(finalfreq) <- as.character(finalL)
+    popfreq[names(finalfreq)] <- popfreq[names(finalfreq)] + finalfreq
+}
+barplot(popfreq, space=0, main='Updated length distribution', xlab='Length', ylab='Frequency')
+plot(finalLscale, popfreq, type='l', lwd=2, col='blue')
+lines(finalLscale, tempL, type='l', lwd=2, col='red')
+
+
+
+
 
 
 
