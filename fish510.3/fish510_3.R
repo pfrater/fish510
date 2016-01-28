@@ -163,14 +163,92 @@ lines(finalLscale, tempL, type='l', lwd=2, col='red')
 
 
 
+######################################################
+## end of tutorial practicals
+######################################################
+# write a von Bertalanffy function to predict length at age with specified parameters
+vonb <- function(b) {
+    linf <- b[1];
+    k <- b[2];
+    t0 <- b[3];
+    len <- linf*(1-exp(-k*(age-t0)));
+    return(len)
+}
+lengths <- vonb(linf=160, k=0.09, age=2:14)
+plot(lengths~age, data=lengths, type='l')
 
+lengths2 <- vonb(linf=120, k=0.05, age=2:14)
+lines(lengths~age, data=lengths2, type='l', col='red')
 
+lengths3 <- vonb(linf=80, k=0.09, age=2:14)
+lines(lengths~age, data=lengths3, type='l', col='blue')
 
+# function to produce sum of squared errors between vonb prediction and data
+vb.sse <- function(b) {
+    lhat <- vonb(b);
+    sse <- sum((l-lhat)^2);
+    return(sse)
+}
 
+### estimating a vonb equation from given data
+L <- c(18, 24, 29, 32, 35)
+age <- c(1.5, 2.5, 3.5, 4.5, 5.5)
+l.t <- L[1:4]
+l.t1 <- L[2:5]
+length.mod <- lm(l.t1~l.t)
+length.coef <- coef(length.mod)
 
+pred.lengths <- vonb(linf=(length.coef[1] / (1-length.coef[2])), k= (-log(length.coef[2])), age=time)
+plot(L~time)
+points(lengths~age, data=pred.lengths, type='l')
 
+est <- nlm(vb.sse, c(100, 0.1, 0))
+pred.lengths <- vonb(est$estimate)
+plot(L~time)
+points(lengths~age, data=pred.lengths, type='l')
 
+### models of length distribution
+# viewing simple gaussian distribution of lengths
+le <- seq(15,30,1)
+plot(le, dnorm(le, 23, 1.4), lwd=2)
+lines(le, dnorm(le, 23, 1.4))
 
+# assuming the length group is -0.5 to +0.5 of the mean
+# we use the cumulative distribution of the density instead
+plot(le, pnorm((le-23)/1.4), type='o')
+leA <- seq(15.5, 30.5, 1)
+leB <- seq(14.5, 29.5, 1)
+rbind(leA, leB)
+
+d2 <- pnorm((leA-23)/1.4) - pnorm((leB-23)/1.4)
+plot(le,d2, type='o')
+
+# one way to do it is to look at peaks in proportion of lengths ~ lengths and specify age classes
+# another is to use a von Bertalanffy growth curve to see what length fish 'should' be at certain age
+age <- 1:8
+mu <- vonb(c(60, 0.18, 0))
+sdev <- rep(2.4, length(age))
+le <- 1:60
+leA <- seq(1.5, 60.5, 1)
+leB <- seq(0.5, 59.5, 1)
+
+n <- 1
+m <- 0.3
+for (i in age) {
+    n <- c(n, exp(-m)*n[i])
+}
+
+ntot <- sum(n)
+p <- n/ntot
+
+# calculating length distributions for each age
+ldist <- NULL
+for (i in age) {
+    d2 <- (pnorm((leA-mu[i])/sdev[i]) - pnorm((leB-mu[i])/sdev[i]))*p[i];
+    ldist <- rbind(ldist, d2)
+}
+matplot(le, t(ldist), type='l')
+plot(le, apply(ldist, 2, sum), type='l')
 
 
 
