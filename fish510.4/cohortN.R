@@ -8,6 +8,7 @@
 cohortN <- function(cnum, m, nlast, noldest) {
     a <- ncol(cnum);
     Y <- nrow(cnum);
+    years <- rownames(cnum);
     nmat <- c(nlast, noldest[Y+1]);
     n1 <- nlast;
     for (y in Y:1) {
@@ -16,7 +17,9 @@ cohortN <- function(cnum, m, nlast, noldest) {
         n0 <- (ntmp*exp(m/2)+cline)*exp(m/2);
         n0 <- c(n0, noldest[y]);
         nmat <- rbind(n0,nmat);
-        n1 <- n0
+        n1 <- n0;
     }
+    rownames(nmat) <- years[1:(Y+1)]
+    colnames(nmat) <- 1:(a+1)
     return(nmat)
 }

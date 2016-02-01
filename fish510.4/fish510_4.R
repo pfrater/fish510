@@ -53,6 +53,7 @@ cnum <- read.table('nsplaice.canum', header=T, as.is=T, check.names=F)
 cnum <- as.matrix(cnum)
 nmat <- cohortN(cnum, m=0.15, nlast=1:ncol(cnum), noldest=1:(nrow(cnum)+1))
 years <- as.integer(rownames(cnum))
+m <- 0.15
 
 # based on the above backcalculations we can now calculate fishing mortality
 # simple calculation of one age class in single year
@@ -61,8 +62,36 @@ log(nmat[2,3]/nmat[3,4]) - m
 # now doing the two age classes across all years in matrix
 a <- ncol(nmat); y <- nrow(nmat)
 f.mat <- log(nmat[1:(y-1),1:(a-1)]/nmat[2:y,2:a])-m
-fbar.y <- apply(f.mat[1:(y-2),3:5], 1, mean)
+fbar.y <- apply(f.mat[1:(y-1),], 1, mean)
 plot(fbar.y~years[1:(y-2)], type='l')
+
+# we can get at selection pattern for fish of ages and years by dividing F.ay by fbar.y
+selpat <- f.mat/fbar.y
+
+### repeating the procedure with the assumption that we leave half the fish
+source('cohortN.r')
+cnum <- read.table('base.dat', header=T, as.is=T, check.names=F)
+cnum <- as.matrix(cnum)
+m <- 0.15
+a <- ncol(cnum)
+y <- nrow(cnum)
+noldest <- mean(cnum[,a])
+noldest <- rep(noldest, y+1)
+nlast <- apply(cnum, 2, mean)
+nmat <- cohortN(cnum, m, nlast, noldest)
+fmat <- log(nmat[1:y,1:a]/nmat[2:(y+1), 2:(a+1)])-m
+selages <- as.character(3:5)
+fbar.y <- apply(fmat[,selages], 1, mean)
+selpat <- fmat/fbar.y
+sa <- apply(selpat[as.character(1988:1993),], 2, mean)
+ages <- as.numeric(names(sa))
+plot(sa~ages, xlab='Age', ylab='Selection at Age', type='l', ylim=c(0,1.5))
+
+
+
+
+
+
 
 
 
