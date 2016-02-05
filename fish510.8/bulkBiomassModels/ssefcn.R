@@ -1,0 +1,17 @@
+#ssefcn.r  
+ssefcn<-function(parameters,Y,I,M,w){    
+    totyrs<-length(Y)    
+    Fvec<-exp(parameters[1:totyrs])    
+    Rvec<-exp(parameters[(totyrs+1):(2*totyrs)])    
+    q<-exp(parameters[2*totyrs+1])    
+    #alpha<-parameters[2*totyrs+2]    
+    #K<-parameters[2*totyrs+3]     
+    proj<-aspm(Fvec,Rvec,totyrs,M,w)    
+    Yhat<-proj$Yhat    
+    Bhat<-proj$Bhat    
+    Ihat<-q*Bhat     
+    SSEY<-sum((log(Y)-log(Yhat))^2)    
+    SSEI<-sum((log(I)-log(Ihat))^2)    
+    SSE<-SSEI+SSEY    
+    return(SSE)  
+}
